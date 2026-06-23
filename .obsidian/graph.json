@@ -5,8 +5,51 @@
   "showAttachments": false,
   "hideUnresolved": false,
   "showOrphans": true,
-  "collapse-color-groups": true,
-  "colorGroups": [],
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:\"03 Concept Notes/Finance\" OR tag:#finance OR tag:#quant-trading OR tag:#option-pricing",
+      "color": {
+        "a": 1,
+        "rgb": 16098827
+      }
+    },
+    {
+      "query": "tag:#scientific-machine-learning OR tag:#neural-operator OR tag:#operator-learning OR tag:#pde OR tag:#hpc OR tag:#surrogate-model OR tag:#numerical-method OR tag:#scientific-computing",
+      "color": {
+        "a": 1,
+        "rgb": 3710965
+      }
+    },
+    {
+      "query": "file:(Transformer OR Attention OR BERT OR GPT OR T5 OR \"Large Language Model\" OR \"Mixture of Experts\" OR \"Positional Encoding\" OR \"Token Embedding\" OR \"Layer Normalization\" OR \"Causal Mask\" OR \"Rotary Positional Embedding\") OR tag:#transformer OR tag:#attention OR tag:#large-language-model",
+      "color": {
+        "a": 1,
+        "rgb": 11164893
+      }
+    },
+    {
+      "query": "tag:#rag OR tag:#information-retrieval OR tag:#knowledge-base OR file:(Retrieval OR Search OR Vector OR Chunking OR Embedding OR Re-ranking OR Hallucination)",
+      "color": {
+        "a": 1,
+        "rgb": 3581519
+      }
+    },
+    {
+      "query": "tag:#neural-network OR file:(Network OR Activation OR CNN OR RNN OR LSTM OR \"Fully Connected Neural Network\" OR \"Convolutional Neural Network\" OR \"Recurrent Neural Network\")",
+      "color": {
+        "a": 1,
+        "rgb": 39423
+      }
+    },
+    {
+      "query": "tag:#math OR tag:#probability OR tag:#fourier-transform OR tag:#spectral-method OR file:(Fourier OR Stochastic OR Brownian OR Ito)",
+      "color": {
+        "a": 1,
+        "rgb": 16053492
+      }
+    }
+  ],
   "collapse-display": true,
   "showArrow": false,
   "textFadeMultiplier": 0,
