@@ -109,17 +109,9 @@ prices[1000 days, 200 stocks]
 
 ---
 
-## 열수력/HPC 연구와의 연결
-
-Backtesting은 simulation campaign과 비슷합니다. parameter sweep, sensitivity analysis, uncertainty propagation을 대량으로 수행하며, 대규모 자산/고빈도 데이터에서는 [[High Performance Computing]]과 병렬화가 중요해집니다.
-
----
-
 ## 관련 노트
 
 - [[Quant Trading]]
-- [[Uncertainty Quantification]]
-- [[High Performance Computing]]
 
 ---
 

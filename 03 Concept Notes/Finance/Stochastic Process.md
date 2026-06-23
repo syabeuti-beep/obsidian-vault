@@ -103,7 +103,6 @@ $$
 - [[Quant Trading]]
 - [[Brownian Motion]]
 - [[Stochastic Differential Equation]]
-- [[Uncertainty Quantification]]
 
 ---
 

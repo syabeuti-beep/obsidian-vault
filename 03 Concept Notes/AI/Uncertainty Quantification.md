@@ -57,8 +57,6 @@ inlet temperature를 정규분포로 샘플링해 1000번 surrogate를 실행하
 - [[Fourier Neural Operator (FNO)]]
 - [[Scientific Machine Learning]]
 - [[High Performance Computing]]
-- [[Quant Trading]]
-- [[Backtesting]]
 
 ---
 
