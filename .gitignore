@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Obsidian local UI state; these change constantly per device
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/workspace-*.json
+
+# Obsidian trash/cache
+.trash/
+
+# Temporary/editor files
+*.tmp
+*.swp
+*~
