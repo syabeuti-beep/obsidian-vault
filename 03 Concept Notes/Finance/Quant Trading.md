@@ -148,17 +148,6 @@ $$
 
 ---
 
-## 열수력/HPC 연구와의 연결
-
-퀀트 트레이딩은 금융 분야이지만 계산 구조는 [[High Performance Computing]], [[Uncertainty Quantification]], [[Surrogate Model]]과 연결됩니다.
-
-- 많은 parameter 조합과 시장 시나리오를 parallel backtest합니다.
-- Monte Carlo simulation으로 derivative price나 risk metric을 추정합니다.
-- stochastic model과 noisy data를 다룬다는 점에서 UQ와 사고방식이 비슷합니다.
-- PDE/SDE 기반 모델은 공학수학 배경과 연결해 이해할 수 있습니다.
-
----
-
 ## 학습 순서
 
 1. 확률/통계 기초 재정리
@@ -179,8 +168,6 @@ $$
 - [[Ito Lemma]]
 - [[Black-Scholes Model]]
 - [[Backtesting]]
-- [[Uncertainty Quantification]]
-- [[High Performance Computing]]
 
 ---
 
