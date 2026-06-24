@@ -48,6 +48,13 @@
         "a": 1,
         "rgb": 16053492
       }
+    },
+    {
+      "query": "path:\"03 Concept Notes/Semiconductor Process R&D Plasma\" OR tag:#semiconductor-process-rnd OR tag:#plasma-etching",
+      "color": {
+        "a": 1,
+        "rgb": 16753920
+      }
     }
   ],
   "collapse-display": true,
