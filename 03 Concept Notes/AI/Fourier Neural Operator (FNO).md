@@ -547,38 +547,111 @@ $$
 
 ## 컴퓨팅 관점의 입력과 출력
 
-FNO에서 “입력과 출력은 함수”라는 말은 코드에서는 grid tensor를 의미합니다. 예를 들어 2D 열수력 surrogate를 만든다면 입력은 다음처럼 구성할 수 있습니다.
+FNO에서 “입력과 출력은 함수”라는 말은 코드에서는 grid tensor를 의미합니다. 즉 수학적으로는
+
+$$
+\mathcal{G}_\theta: a(x) \mapsto u(x)
+$$
+
+이지만, 실제 PyTorch 코드에서는 대략 다음 shape의 tensor mapping으로 구현합니다.
 
 ```text
-X.shape = [batch, Nx, Ny, input_channels]
+2D FNO input  X      : [batch, Nx, Ny, Cin]
+2D FNO output Y_hat  : [batch, Nx, Ny, Cout]
 ```
 
-입력 channel 예시:
+많은 PyTorch 구현은 내부 convolution/FFT 처리를 위해 channel-first 형식도 사용합니다.
 
 ```text
-channel 0: inlet velocity field or mask
-channel 1: wall heat flux field
-channel 2: geometry/fluid mask
-channel 3: x-coordinate
-channel 4: y-coordinate
+외부 데이터 형식 예시 : [batch, Nx, Ny, Cin]
+모델 내부 형식 예시 : [batch, Cin, Nx, Ny]
 ```
 
-출력은 예측하려는 physical field입니다.
+여기서 중요한 점은 `Cin`이 일반 tabular feature가 아니라, 같은 grid 위에 정의된 여러 개의 physical field 또는 coordinate field라는 것입니다.
+
+### 실제 입력 예시 1: 2D 열전달 surrogate
+
+예를 들어 2D channel 또는 rod bundle 단면에서 정상상태 온도장을 빠르게 예측하고 싶다고 하겠습니다.
+
+입력:
 
 ```text
-Y_hat.shape = [batch, Nx, Ny, output_channels]
+X.shape = [batch, Nx, Ny, 5]
+
+channel 0: q'''(x,y)       # volumetric heat source 또는 power distribution
+channel 1: u_in(x,y)       # inlet velocity profile 또는 유속 조건 field
+channel 2: wall_mask(x,y)  # wall/fluid/solid를 구분하는 geometry mask
+channel 3: x_coord(x,y)    # x 좌표
+channel 4: y_coord(x,y)    # y 좌표
 ```
 
-출력 channel 예시:
+출력:
 
 ```text
-channel 0: temperature
-channel 1: pressure
-channel 2: x-velocity
-channel 3: y-velocity
+Y_hat.shape = [batch, Nx, Ny, 2]
+
+channel 0: T(x,y)          # temperature field
+channel 1: p(x,y)          # pressure field
 ```
 
-따라서 실제 구현 관점에서는 `[batch, Nx, Ny, Cin] → [batch, Nx, Ny, Cout]` 매핑을 학습하는 모델입니다. 다만 이 tensor가 단순 feature vector가 아니라 공간 field의 discretization이라는 점이 FCNN과 다릅니다.
+즉 모델이 학습하는 것은 다음과 같은 field-to-field mapping입니다.
+
+```text
+[power field, inlet condition, geometry, coordinates]
+→ [temperature field, pressure field]
+```
+
+### 실제 입력 예시 2: CFD time marching surrogate
+
+시간발전 문제에서는 현재 시점의 field를 넣고 다음 시점의 field를 예측하게 만들 수 있습니다.
+
+```text
+X_t.shape = [batch, Nx, Ny, 6]
+
+channel 0: T(x,y,t)        # 현재 온도
+channel 1: p(x,y,t)        # 현재 압력
+channel 2: u(x,y,t)        # x 방향 속도
+channel 3: v(x,y,t)        # y 방향 속도
+channel 4: wall_mask(x,y)  # geometry 정보
+channel 5: q_wall(x,y,t)   # wall heat flux 또는 source term
+```
+
+출력은 다음 time step의 field입니다.
+
+```text
+Y_hat.shape = [batch, Nx, Ny, 4]
+
+channel 0: T(x,y,t+Δt)
+channel 1: p(x,y,t+Δt)
+channel 2: u(x,y,t+Δt)
+channel 3: v(x,y,t+Δt)
+```
+
+이 경우 FNO는 다음 연산을 근사합니다.
+
+```text
+current fields + boundary/source information
+→ next-step fields
+```
+
+### 실제 코드에서 한 batch가 의미하는 것
+
+`batch`는 서로 다른 simulation case의 개수입니다. 예를 들어 batch size가 8이면 한 번의 forward pass에서 서로 다른 8개의 CFD 조건을 동시에 처리합니다.
+
+```text
+X[0] = case 0: 낮은 inlet velocity, 높은 heat flux
+X[1] = case 1: 높은 inlet velocity, 낮은 heat flux
+X[2] = case 2: 다른 power distribution
+...
+```
+
+따라서 학습 데이터셋은 보통 다음과 같은 pair들의 모음입니다.
+
+```text
+(X_case_i, Y_case_i)
+```
+
+여기서 `X_case_i`는 특정 simulation 조건의 입력 field이고, `Y_case_i`는 고충실도 solver가 계산한 정답 field입니다.
 
 ---
 
@@ -597,7 +670,114 @@ output Y.shape = [batch, 64, 1]
         channel 0: temperature T(x,t_final)
 ```
 
+예를 들어 grid point가 64개이고, 한 simulation case의 초기 온도장이 다음처럼 주어졌다고 하겠습니다.
+
+```text
+x      = [0.00, 0.016, 0.032, ..., 1.00]
+T0     = [300.0, 302.1, 304.0, ..., 300.0]
+X[i]   = stack([T0, x])          # shape: [64, 2]
+Y[i]   = T_final[:, None]        # shape: [64, 1]
+```
+
+FNO는 `T0`를 단순히 길이 64짜리 벡터로만 보지 않고, 1D 공간 위에 놓인 field로 봅니다. 그래서 Fourier transform을 통해 전체 공간 패턴을 주파수 성분으로 나누고, 낮은 Fourier mode에 학습 가능한 complex weight를 적용합니다.
+
 FCNN이라면 `64`개 값을 긴 벡터로 펼쳐 `[batch, 64] → [batch, 64]`로 처리할 수 있지만, FNO는 이 배열을 spatial field로 보고 FFT를 적용해 낮은 Fourier mode를 학습합니다. 그래서 같은 연산 구조를 `128`개 grid point에도 비교적 자연스럽게 적용할 수 있습니다.
+
+### Toy pseudo code: 1D FNO forward pass
+
+아래는 실제 PyTorch 문법과 거의 비슷하지만, 개념을 보이기 위해 단순화한 pseudo code입니다.
+
+```python
+# X: [batch, N, Cin]
+# 예: [batch, 64, 2]
+# channel 0 = T(x,0), channel 1 = x-coordinate
+
+def fno_forward(X):
+    # 1. Lifting: 각 grid point의 입력 channel을 hidden channel로 올림
+    # [batch, N, Cin] -> [batch, N, width]
+    v = linear_lift(X)
+
+    # 2. 여러 개의 Fourier layer 반복
+    for layer in fourier_layers:
+        # 2-1. FFT: physical space -> frequency space
+        # [batch, N, width] -> [batch, N_freq, width], complex
+        v_hat = fft(v, dim="space")
+
+        # 2-2. 낮은 Fourier mode만 선택
+        # 예: modes = 12이면 k = 0,...,11만 학습
+        low_modes = v_hat[:, 0:modes, :]
+
+        # 2-3. mode별 complex weight 적용
+        # 각 frequency k마다 hidden channel을 섞음
+        out_hat = zeros_like(v_hat)
+        out_hat[:, 0:modes, :] = complex_channel_mixing(
+            low_modes,
+            layer.spectral_weights
+        )
+
+        # 2-4. inverse FFT: frequency space -> physical space
+        spectral_out = ifft(out_hat, dim="space").real
+
+        # 2-5. pointwise linear term: 각 grid point에서 channel mixing
+        pointwise_out = pointwise_linear(v)
+
+        # 2-6. 두 경로를 더하고 activation 적용
+        v = gelu(spectral_out + pointwise_out)
+
+    # 3. Projection: hidden channel을 원하는 출력 channel로 내림
+    # [batch, N, width] -> [batch, N, Cout]
+    Y_hat = linear_project(v)
+
+    return Y_hat
+```
+
+이 pseudo code에서 핵심은 다음 한 줄입니다.
+
+```python
+spectral_out = ifft(R * fft(v)).real
+```
+
+수식으로 쓰면 이 부분이 바로 다음입니다.
+
+$$
+\mathcal{F}^{-1}\left(R_\theta \cdot \mathcal{F}(v)\right)
+$$
+
+즉 FNO layer는 `physical grid에서 직접 모든 점을 dense하게 연결하는 것`이 아니라,
+
+```text
+physical field
+→ Fourier coefficients
+→ low-mode spectral weights
+→ physical field
+```
+
+의 흐름으로 global interaction을 학습합니다.
+
+### Toy training loop pseudo code
+
+학습 과정은 일반 supervised learning과 거의 같습니다. 차이는 입력과 출력이 scalar label이 아니라 field 전체라는 점입니다.
+
+```python
+# dataset item:
+# X_batch: [batch, N, Cin]
+# Y_batch: [batch, N, Cout]
+
+model = FNO1D(modes=12, width=64, Cin=2, Cout=1)
+optimizer = Adam(model.parameters(), lr=1e-3)
+
+for X_batch, Y_batch in dataloader:
+    Y_pred = model(X_batch)
+
+    # field 전체에 대한 오차
+    loss = mean((Y_pred - Y_batch) ** 2)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+```
+
+열수력/CFD surrogate에서는 `Y_batch`가 온도장, 압력장, 속도장 같은 고충실도 solver 결과가 됩니다. 따라서 FNO 학습은 “입력 조건에서 정답 scalar 하나를 맞추는 문제”가 아니라 “입력 field에서 출력 field 전체를 맞추는 문제”라고 이해하면 됩니다.
 
 ---
 
