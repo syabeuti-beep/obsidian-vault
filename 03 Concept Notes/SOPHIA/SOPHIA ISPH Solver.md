@@ -86,6 +86,58 @@ pressure-relaxation factor: 1
 14. XSPH correction
 ```
 
+## 주요 SPH 이산화 식
+
+현재 ISPH solver의 각 kernel은 자기 입자 `i`와 이웃 입자 `j` 사이의 kernel 합산으로 항을 만듭니다. 자세한 kernel 정의와 수식은 [[SOPHIA SPH Discrete Equations]]를 보세요.
+
+### Pressure/advection force 쪽 기본 형태
+
+`function_PPE.cuh`의 `KERNEL_advection_force3D_sph()`는 pressure-gradient, viscous, artificial viscosity, surface tension, heat diffusion 등을 한 이웃 loop 안에서 계산합니다.
+
+Pressure-gradient coupling source는 대략 다음 형태입니다.
+
+$$
+\mathbf{G}_{p,i}
+= \frac{\rho_i}{\epsilon_i}
+\sum_j \left[-\epsilon_i m_j\frac{p_i+p_j}{\rho_i\rho_j}\right]
+\nabla_i^c W_{ij}
+$$
+
+Viscous force는 코드상 다음 계수로 계산됩니다.
+
+$$
+C_{v,ij}
+=4\epsilon_i\frac{m_j}{\rho_i\rho_j}
+\frac{\mu_i\mu_j}{\mu_i+\mu_j}
+\frac{\mathbf{r}_{ij}\cdot\nabla_i^cW_{ij}}{r_{ij}^2}
+$$
+
+$$
+\mathbf{a}_{v,i}=\sum_j C_{v,ij}(\mathbf{u}_i-\mathbf{u}_j)
+$$
+
+### Porosity thermal diffusion
+
+현재 열전도가 켜져 있으면 유체 온도 방정식에는 porosity-modified diffusion이 들어갑니다.
+
+$$
+\chi_i=(1-\sqrt{1-\epsilon_i})k_{f,i}
+$$
+
+$$
+\chi_{ij}^{H}=\frac{2\chi_i\chi_j}{\chi_i+\chi_j}
+$$
+
+$$
+\frac{dT_i}{dt}
+=\frac{1}{C_{p,i}}
+\sum_j \frac{2m_j}{\rho_j}\frac{\chi_{ij}^{H}}{\epsilon_i\rho_i}
+(T_i-T_j)\frac{\mathbf{r}_{ij}\cdot\nabla_i^cW_{ij}}{r_{ij}^2+\eta^2}
+-\text{Eulerian advection term}
+$$
+
+논문 열전달식을 구현할 때 이 fluid conduction 식과 [[SOPHIA Solid-Fluid Heat Transfer]]의 DEM-fluid source 식을 모두 확인해야 합니다.
+
 ## PPE 관련 코드
 
 PPE 관련 kernel들은 `function_PPE.cuh`에 있습니다.
@@ -144,6 +196,9 @@ KERNEL_SPH_coupling3D_sph
 ## 관련 노트
 
 - [[SOPHIA Simulation Execution Flow]]
+- [[SOPHIA SPH Discrete Equations]]
+- [[SOPHIA Solid-Fluid Heat Transfer]]
+- [[SOPHIA Paper Equation Audit Workflow]]
 - [[SOPHIA Particle Data Structures]]
 - [[SOPHIA SPH-DEM Coupling]]
 - [[SOPHIA Open Boundary Condition]]

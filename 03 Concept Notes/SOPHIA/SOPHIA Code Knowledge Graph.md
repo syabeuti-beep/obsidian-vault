@@ -42,6 +42,8 @@ source_priority: current-code-first
 
 따라서 이 지식그래프는 “이론 정리”보다 “코드 수정과 입력파일 생성을 위한 작동 지도”에 초점을 둡니다.
 
+추가로, 논문 기반 구현에서는 단순히 geometry/input을 만드는 것만으로는 부족합니다. 논문에 제시된 지배방정식과 closure correlation이 현재 SOPHIA 코드의 실제 계산식과 일치하는지 먼저 확인해야 합니다. 특히 열전달, drag, porosity, pressure source, density/mass update처럼 결과에 직접 영향을 주는 식은 [[SOPHIA Paper Equation Audit Workflow]]에 따라 논문 식 ↔ 현재 코드 식 ↔ 수정 코드 식을 비교해야 합니다.
+
 ## 중심 노트
 
 - [[SOPHIA Code Architecture]]: 현재 코드 파일들이 어떤 역할을 하는지
@@ -49,6 +51,9 @@ source_priority: current-code-first
 - [[SOPHIA Input Files]]: `solv.txt`, `data.txt`, `input.txt`, `p_type.txt`의 의미
 - [[SOPHIA Particle Data Structures]]: `part1`, `part2`, `part3` 구조체 필드 해석
 - [[SOPHIA ISPH Solver]]: 현재 코드의 핵심 solver 루프
+- [[SOPHIA SPH Discrete Equations]]: SPH kernel, 이웃 입자 합산식, gradient correction, diffusion 이산화
+- [[SOPHIA Solid-Fluid Heat Transfer]]: DEM-SPH 고체-유체 열전달식, Nusselt/source term, SPH 반작용
+- [[SOPHIA Paper Equation Audit Workflow]]: 논문 식과 현재 코드 식을 비교하고 수정하는 절차
 - [[SOPHIA SPH-DEM Coupling]]: SPH 입자와 DEM 입자 사이의 two-way coupling
 - [[SOPHIA DEM Model]]: DEM contact, wall collision, sliding/rolling 모델
 - [[SOPHIA Open Boundary Condition]]: open boundary 처리 흐름

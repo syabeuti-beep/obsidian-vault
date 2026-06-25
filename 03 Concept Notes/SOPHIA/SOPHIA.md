@@ -38,15 +38,20 @@ source_priority: current-code-first
 5. [[SOPHIA Simulation Execution Flow]]
 6. [[SOPHIA Input Files]]
 7. [[SOPHIA Particle Data Structures]]
-8. [[SOPHIA ISPH Solver]]
-9. [[SOPHIA SPH-DEM Coupling]]
-10. [[SOPHIA DEM Model]]
-11. [[SOPHIA Open Boundary Condition]]
-12. [[SOPHIA CUDA GPU Parallelization]]
+8. [[SOPHIA SPH Discrete Equations]]
+9. [[SOPHIA ISPH Solver]]
+10. [[SOPHIA SPH-DEM Coupling]]
+11. [[SOPHIA Solid-Fluid Heat Transfer]]
+12. [[SOPHIA Paper Equation Audit Workflow]]
+13. [[SOPHIA DEM Model]]
+14. [[SOPHIA Open Boundary Condition]]
+15. [[SOPHIA CUDA GPU Parallelization]]
 
 ## 핵심 해석 원칙
 
 현재 코드를 정답으로 보고, PDF 매뉴얼과 이론 자료는 참고로 봅니다. 특히 초기 Code Manual은 파일 형식과 기본 구조를 이해하는 데 유용하지만, 현재 코드의 SPH/DEM 분리 구조, `decouple_stride`, DEM 출력 중심 설정, domain hard-coding 같은 최신 변경점을 대체하지 못합니다.
+
+논문 구현을 할 때는 `input.txt`나 geometry만 맞추는 것이 아니라, 논문 식과 현재 SOPHIA 식이 같은지도 확인해야 합니다. 밀도, 압력, 점성, 열전도, 고체-유체 열전달, drag, porosity source는 [[SOPHIA SPH Discrete Equations]]와 [[SOPHIA Paper Equation Audit Workflow]]를 기준으로 수식 수준에서 비교합니다.
 
 ## 최종 목표
 
@@ -61,6 +66,9 @@ source_priority: current-code-first
 ## 관련 노트
 
 - [[SOPHIA Code Knowledge Graph]]
+- [[SOPHIA SPH Discrete Equations]]
+- [[SOPHIA Solid-Fluid Heat Transfer]]
+- [[SOPHIA Paper Equation Audit Workflow]]
 - [[SOPHIA Input Files]]
 - [[SOPHIA Simulation Execution Flow]]
 - [[SOPHIA Current Code vs Manuals]]
